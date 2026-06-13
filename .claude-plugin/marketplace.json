@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
-  "name": "eliteamz",
-  "description": "Catálogo de plugins da Eliteamz — Radar Scout: converse com seus dados de vendas, lucro e repricer da Amazon.",
+  "name": "radarscout",
+  "description": "Catálogo oficial do Radar Scout — converse com seus dados de vendas, lucro e repricer da Amazon.",
   "owner": {
     "name": "Radar Scout",
     "email": "suporte@radarscout.com.br"

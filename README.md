@@ -26,7 +26,7 @@ Converse com seus dados do Radar Scout — **vendas, lucro (MC1–MC3), repasses
 
 ```bash
 /plugin marketplace add eliteamz/radarscout-plugin
-/plugin install radarscout@eliteamz
+/plugin install radarscout@radarscout
 ```
 
 …ou só o MCP:

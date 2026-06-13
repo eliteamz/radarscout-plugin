@@ -21,7 +21,7 @@ jobs:
             echo "::group::parse $f"; jq empty "$f"; echo "ok"; echo "::endgroup::"
           done
           jq -e '.name == "radarscout"' .claude-plugin/plugin.json > /dev/null
-          jq -e '.name == "eliteamz" and (.plugins | length) >= 1' .claude-plugin/marketplace.json > /dev/null
+          jq -e '.name == "radarscout" and (.plugins | length) >= 1' .claude-plugin/marketplace.json > /dev/null
           jq -e '.plugins[0].name == "radarscout" and .plugins[0].source == "."' .claude-plugin/marketplace.json > /dev/null
           jq -e '.mcpServers.radarscout.type == "http"' .mcp.json > /dev/null
           jq -e '.mcpServers.radarscout.url | startswith("https://")' .mcp.json > /dev/null
