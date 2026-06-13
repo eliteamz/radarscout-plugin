@@ -39,4 +39,5 @@ Cobre três coisas distintas — não as confunda:
 
 - **Catálogo ≠ seus anúncios.** Deixe claro que busca/detalhe são do catálogo Amazon, não das suas vendas.
 - **Rastreado ≠ favorito** — são entidades diferentes.
+- **Título nulo** num produto rastreado: identifique pelo **ASIN** em vez de omitir o item.
 - Não varra todas as páginas de cursor sem o usuário pedir; mostre a primeira e ofereça mais.

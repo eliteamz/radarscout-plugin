@@ -35,5 +35,7 @@ Entrega um panorama interpretado das vendas de um período: indicadores de topo 
 ## Cuidados
 
 - MC3 já é líquido — não some tarifas/anúncios "de novo" por cima.
+- **Sem vendas** (GMV 0 / lista vazia): diga claramente que não há vendas nessa conta e período; ofereça outra conta (o usuário pode ter várias) ou outra janela. A ingestão pode atrasar dados muito recentes.
+- **MC3 agregado negativo:** abra com o alerta de **prejuízo** — vendeu, mas o lucro líquido ficou negativo —, não só com o GMV. Encaminhe à skill `lucro` para achar a etapa que virou o resultado.
 - `list_top_products` pagina por cursor; para um panorama, a primeira página (até 50) basta. Não varra todas as páginas sem o usuário pedir.
 - Se o lucro vier estranho, pode faltar CMV cadastrado — encaminhe para a skill `lucro` (que reporta a cobertura de CMV).

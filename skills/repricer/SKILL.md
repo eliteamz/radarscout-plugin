@@ -39,3 +39,4 @@ Responde duas perguntas: **"o repricer está indo bem?"** (saúde agregada) e **
 
 - Distinga **safe mode** (simulação) de preço realmente publicado — não diga que "mudou o preço" se foi simulação.
 - "Travado no mínimo" não é bug: é proteção de margem. Explique qual limite vincula.
+- **Repricer sem ofertas/atividade** (`total_offers` 0 e 0 mudanças de preço no período): diga que não houve repricing — pode estar inativo ou sem ofertas elegíveis. A atividade ainda pode trazer eventos de **config** (ligar/desligar, safe mode); use-os para explicar o estado.

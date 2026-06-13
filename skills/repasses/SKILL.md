@@ -40,3 +40,4 @@ Responde **"quando e quanto vou receber?"** e explica por que o **valor deposita
 - **Data de depósito ≠ fim do período** do settlement — não troque uma pela outra.
 - Repasse líquido já é pós-deduções; ao conciliar, parta do GMV e subtraia, não some.
 - Se houver aviso de ingestão incompleta, deixe claro que é estimativa parcial.
+- **Sem repasse registrado** (próximo, último e ciclo todos nulos): diga que ainda não há repasse projetado nem concluído para essa conta — não despeje campos vazios.

@@ -43,3 +43,5 @@ Explica **onde o lucro é formado e consumido**, etapa a etapa, em vez de só mo
 - Não confunda **Receita Líquida** (pós-devoluções/impostos) com GMV.
 - MC3 é o lucro final; não some anúncios/tarifas por fora.
 - Sem CMV cadastrado, o MC1+ fica otimista — sempre sinalize.
+- **Sem vendas no período** (`net_sales` 0, `mc3` null): informe que não há dados de lucro a detalhar; não invente cascata.
+- **MC3 negativo:** lidere com o alerta de **prejuízo agregado** e aponte qual etapa (CMV, tarifas, anúncios, devoluções) virou o resultado.
