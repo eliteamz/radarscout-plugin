@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "eliteamz",
+  "description": "Catálogo de plugins da Eliteamz — Radar Scout: converse com seus dados de vendas, lucro e repricer da Amazon.",
+  "owner": {
+    "name": "Radar Scout",
+    "email": "suporte@radarscout.com.br"
+  },
+  "plugins": [
+    {
+      "name": "radarscout",
+      "source": ".",
+      "description": "Skills + MCP para analisar vendas, lucro (MC1–MC3), repasses e repricer do Radar Scout.",
+      "category": "analytics",
+      "tags": ["amazon", "seller", "vendas", "lucro", "repricer", "repasses"]
+    }
+  ]
+}

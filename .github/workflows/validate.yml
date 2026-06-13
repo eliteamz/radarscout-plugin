@@ -1,0 +1,44 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Gate primário confiável (auth-free): JSON parseia + campos obrigatórios corretos.
+      - name: Manifestos — parse + campos obrigatórios
+        run: |
+          set -euo pipefail
+          for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json .mcp.json; do
+            echo "::group::parse $f"; jq empty "$f"; echo "ok"; echo "::endgroup::"
+          done
+          jq -e '.name == "radarscout"' .claude-plugin/plugin.json > /dev/null
+          jq -e '.name == "eliteamz" and (.plugins | length) >= 1' .claude-plugin/marketplace.json > /dev/null
+          jq -e '.plugins[0].name == "radarscout" and .plugins[0].source == "."' .claude-plugin/marketplace.json > /dev/null
+          jq -e '.mcpServers.radarscout.type == "http"' .mcp.json > /dev/null
+          jq -e '.mcpServers.radarscout.url | startswith("https://")' .mcp.json > /dev/null
+
+      # Cinto-e-suspensório (best-effort): JSON Schema do schemastore.
+      - name: JSON Schema (best-effort)
+        continue-on-error: true
+        run: |
+          set -eu
+          curl -fsSL https://json.schemastore.org/claude-code-plugin-manifest.json -o /tmp/plugin.schema.json
+          curl -fsSL https://json.schemastore.org/claude-code-marketplace.json -o /tmp/marketplace.schema.json
+          npx --yes ajv-cli@5 validate --strict=false -s /tmp/plugin.schema.json -d .claude-plugin/plugin.json
+          npx --yes ajv-cli@5 validate --strict=false -s /tmp/marketplace.schema.json -d .claude-plugin/marketplace.json
+
+      # Validador oficial (best-effort: pode exigir auth/onboarding no runner — ver ADR/README).
+      - name: claude plugin validate (best-effort)
+        continue-on-error: true
+        run: |
+          npm i -g @anthropic-ai/claude-code
+          claude plugin validate . --strict
