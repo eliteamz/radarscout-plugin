@@ -58,6 +58,24 @@ Connectors adicionados no claude.ai aparecem automaticamente no Claude Code.
 { "servers": { "radarscout": { "type": "http", "url": "https://mcp.radarscout.com.br/mcp" } } }
 ```
 
+### Skills em qualquer agente — skills.sh (`npx skills`)
+
+As 8 skills são instaláveis em 70+ agentes (Claude Code, Cursor, Copilot, Windsurf, Gemini, Codex…) via [skills.sh](https://www.skills.sh):
+
+```bash
+# todas as skills do repo
+npx skills add eliteamz/radarscout-plugin
+
+# só algumas, num agente específico, sem prompt interativo
+npx skills add eliteamz/radarscout-plugin --skill vendas --skill lucro -a claude-code -y
+
+# experimentar uma sem instalar
+npx skills use eliteamz/radarscout-plugin@relatorio | claude
+```
+
+> ⚠️ **`npx skills` instala só as skills** (os `SKILL.md` de `skills/`). O **MCP `radarscout` é configurado à parte** (seções acima, por harness) — sem ele conectado, as skills não têm de onde ler os dados.
+> Requer o repositório **público** (o `add` clona via GitHub).
+
 O primeiro acesso dispara o login OAuth (no Claude Code: comando `/mcp`). O MCP é
 read-only e seller-scoped: cada usuário enxerga apenas os próprios dados.
 
