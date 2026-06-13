@@ -24,7 +24,16 @@ Radar Scout é uma ferramenta para vendedores Amazon acompanharem **vendas, lucr
 
 ## Skills
 
-As skills do vendedor (revisão de vendas, análise de lucro, diagnóstico do repricer, conferência de repasses, monitor de produtos, relatório semanal, primeiros passos, glossário) chegam numa **leva separada** via `skill-creator`. Por enquanto a pasta `skills/` está vazia.
+8 skills do vendedor em `skills/`, cada uma orquestrando os tools `radarscout` e entregando output interpretado em pt-BR:
+
+- `inicio` — conecta e resolve o `seller_account_id`.
+- `vendas` — panorama de vendas (GMV, ticket, MC3, campeões).
+- `lucro` — cascata financeira (MC1–MC3, CMV, tarifas, anúncios).
+- `repricer` — saúde do repricer e auditoria de mudança de preço.
+- `repasses` — próximo repasse e conciliação com vendas.
+- `produtos` — busca de catálogo e watchlist de Buy Box.
+- `relatorio` — briefing diário/semanal narrativo.
+- `glossario` — explica conceitos (sem acessar dados do seller).
 
 ## Convenção de idioma
 
