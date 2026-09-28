@@ -1,6 +1,6 @@
 ---
 name: vendas
-description: "Resume o desempenho de vendas de uma conta de seller num período — GMV (faturamento bruto), itens de pedido, ticket médio e lucro líquido MC3 — e destaca os produtos campeões. Use quando o usuário perguntar como foram as vendas, pedir um panorama de faturamento ou desempenho, falar em GMV/ticket médio, ou quiser comparar períodos."
+description: "Resume o desempenho de vendas de uma conta de seller num período — GMV (faturamento bruto), itens de pedido, ticket médio e lucro líquido MC3 — e destaca os produtos campeões. Use quando o usuário perguntar como foram as vendas, pedir um panorama de faturamento ou desempenho, falar em GMV/ticket médio, ou quiser comparar períodos. Também lista pedidos Amazon pedido a pedido — para conferir contra o ERP, achar um pedido específico ou ver cancelados."
 ---
 
 # Revisão de vendas
@@ -18,6 +18,17 @@ Entrega um panorama interpretado das vendas de um período: indicadores de topo 
 2. Chame a tool de panorama de vendas (`get_sales_overview`) do `radarscout` com `seller_account_id`, `period_start`, `period_end`. Ela traz GMV, número de itens de pedido, ticket médio e **lucro líquido MC3** (já após CMV, tarifas Amazon e anúncios).
 3. Chame a tool de ranking de produtos (`list_top_products`) com a mesma janela. Padrão: `sort=profit` (lucro líquido). Use `sort=margin` se o usuário falar em margem. Ela sinaliza SKUs com **margem negativa** (prejuízo).
 4. Para comparar períodos, repita os passos 2–3 na janela anterior e mostre as variações (R$ e %).
+
+## Pedido a pedido
+
+Quando o vendedor quer **conferir pedidos** (bater com o ERP, achar um pedido, ver cancelados), use `list_orders` com a mesma conta e janela:
+
+- **Grão:** padrão é um registro por pedido (SKUs em `items[]`); `granularity: "item"` dá uma linha por SKU, como a tela Pedidos do Analytics.
+- **Filtros:** `status_group` (`all` — padrão, **inclui cancelados** —, `shipped`, `in_transit`, `pending`, `cancelled`, `problem`) e `search` (número do pedido, SKU, ASIN ou nome do produto).
+- **Valor decomposto:** `items_total` é a soma dos preços unitários da Amazon e **não inclui frete**; frete, desconto promocional e imposto vêm em campos separados. Divergência com o ERP quase sempre está num desses campos — aponte qual.
+- **Não compare contagens entre tools:** `total_orders` conta **pedidos** distintos (com cancelados, se não filtrar); o `orders` de `get_sales_overview` conta **itens de pedido** do relatório Sales & Traffic, sem cancelados. Os dois não batem, e não devem.
+- Pagina por `cursor` (padrão 50, máximo 200). Não varra tudo sem o vendedor pedir.
+- Não há CPF nem endereço do comprador na resposta — não prometa esse dado.
 
 ## O que entregar
 

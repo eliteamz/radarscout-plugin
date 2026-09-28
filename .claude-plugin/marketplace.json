@@ -10,12 +10,13 @@
     {
       "name": "radarscout",
       "source": ".",
-      "description": "Skills + MCP para analisar vendas, lucro (MC1–MC3), repasses, repricer, ofertas e Amazon Ads do Radar Scout — e agir nos anúncios com confirmação.",
+      "description": "Skills + MCP para analisar vendas, pedidos, lucro (MC1–MC3), repasses, repricer, ofertas e Amazon Ads do Radar Scout — e gerenciar campanhas de anúncios com confirmação.",
       "category": "analytics",
       "tags": [
         "amazon",
         "seller",
         "vendas",
+        "pedidos",
         "lucro",
         "repricer",
         "repasses",
