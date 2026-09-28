@@ -16,12 +16,19 @@ Resolve **quem é o usuário** e **qual conta de seller** usar. Toda consulta de
 
 ## Passo a passo
 
-1. Chame a tool de identidade (`whoami`) do servidor `radarscout`. Ela não pede parâmetros e retorna o usuário Radar autenticado + as contas de seller (SellerAccounts) conectadas.
+1. Chame a tool de identidade (`whoami`) do servidor `radarscout`. Ela não pede parâmetros e retorna o usuário Radar autenticado, as contas de seller (SellerAccounts) conectadas — cada uma com o `marketplace` (Amazon ou Mercado Livre) — e os `entitlements` por app.
 2. Trate o resultado:
    - **Nenhuma conta:** o usuário ainda não conectou uma conta Amazon. Explique em pt-BR que sem isso não há dados a consultar e ofereça conectar agora (veja **Conectar uma conta Amazon**).
    - **Uma conta:** confirme qual é (nome + id) e diga que vai usá-la nas próximas consultas. Guarde o `seller_account_id` para reaproveitar na conversa.
    - **Várias contas:** liste os nomes de forma legível e pergunte qual o usuário quer usar. Só depois siga para a consulta.
-3. Se o usuário chegou com uma pergunta de dados (ex.: "como foram minhas vendas?"), encadeie: resolva a conta aqui e então deixe a skill apropriada (`vendas`, `lucro`, etc.) continuar com o `seller_account_id` resolvido.
+3. Leia os `entitlements` para saber o que está liberado — e avisar antes, não depois do bloqueio:
+   - `radar` → catálogo, produtos, calculadora, estimativa por BSR, conexão.
+   - `analytics` → vendas, pedidos, lucro, repasses, ofertas.
+   - `repricer` → repricer.
+   - `performance` → Amazon Ads, leitura e ações.
+   Analytics e Performance em **preview** permitem ler o histórico já na plataforma (a resposta vem com aviso de que não é atualizado); ações em Ads exigem plano ativo. Radar e Repricer não têm preview. Teste gratuito conta como ativo.
+   Ads e as ferramentas de Amazon só valem para conta `AMAZON`; o Repricer atende também Mercado Livre.
+4. Se o usuário chegou com uma pergunta de dados (ex.: "como foram minhas vendas?"), encadeie: resolva a conta aqui e então deixe a skill apropriada (`vendas`, `lucro`, etc.) continuar com o `seller_account_id` resolvido.
 
 ## Conectar uma conta Amazon
 

@@ -3,7 +3,7 @@
   "name": "radarscout",
   "displayName": "Radar Scout",
   "version": "0.3.0",
-  "description": "Converse com seus dados do Radar Scout — vendas, lucro, repasses, repricer e Amazon Ads — e gerencie seus anúncios pelo chat, com simulação e confirmação.",
+  "description": "Converse com seus dados do Radar Scout — vendas, pedidos, lucro, repasses, repricer e Amazon Ads — e gerencie campanhas de Ads (ajustes e criação) com simulação e confirmação.",
   "author": {
     "name": "Radar Scout",
     "email": "suporte@radarscout.com.br",
@@ -18,6 +18,7 @@
     "analytics",
     "repricer",
     "vendas",
+    "pedidos",
     "lucro",
     "repasses",
     "ads",

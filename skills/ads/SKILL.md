@@ -1,6 +1,6 @@
 ---
 name: ads
-description: "Analisa a performance de Amazon Ads de uma conta de seller — investimento, vendas de anúncios, ACoS/ROAS, cliques e conversão, no total da conta, por campanha (com o estado atual de cada uma), por termo de busca, por portfólio, dia a dia e por palavra-chave/alvo (lance atual e o que ele rendeu) — e cobre as alterações com confirmação obrigatória quando o vendedor pedir execução. Use quando o usuário perguntar como estão os anúncios, quanto gastou em Ads, qual o ACoS, quais campanhas ou portfólios gastam sem vender, como evoluiu no período, quais termos de busca dispararam os anúncios (e quais gastam sem converter), quanto está pagando por clique em cada palavra-chave, ou pedir para pausar, mudar lance/orçamento, negativar um termo ou revisar propostas de automação."
+description: "Analisa a performance de Amazon Ads de uma conta de seller — investimento, vendas de anúncios, ACoS/ROAS, cliques e conversão, no total da conta, dia a dia, por portfólio, por campanha (com o estado atual de cada uma), por termo de busca e por palavra-chave/alvo (lance atual e desempenho) — e executa alterações com confirmação: pausar/reativar campanha, ajustar lance e orçamento, negativar termos, e revisar/aprovar propostas do motor de automação. Use quando o usuário perguntar como estão os anúncios, quanto gastou em Ads, qual o ACoS, como o gasto evoluiu dia a dia, se piorou depois de uma mudança, como vai um portfólio, quais campanhas gastam sem vender, quais termos de busca dispararam os anúncios (e quais gastam sem converter), quanto está pagando por clique em cada palavra-chave, ou pedir para pausar, mudar lance/orçamento, negativar um termo ou revisar propostas de automação."
 ---
 
 # Performance de Amazon Ads
@@ -11,18 +11,17 @@ Esta skill dá **premissas de leitura e de execução**, não uma estratégia de
 
 ## Conta e período
 
-- **Conta:** exige `seller_account_id` (via `whoami` do `radarscout`).
+- **Conta:** exige `seller_account_id` (via `whoami` do `radarscout`). As tools de Ads dependem do app **Performance** (`entitlements.performance`). Em **modo preview** a leitura funciona, mas a resposta vem com um aviso: é o histórico que já está na plataforma, sem atualização — repasse esse aviso junto do número.
 - **Período:** ISO `YYYY-MM-DD`, **fim exclusivo**. Sem período, use os **últimos 30 dias** (Ads precisa de volume para o número significar algo) e diga a janela.
 - **Atribuição:** as conversões de Ads amadurecem ao longo da janela de atribuição — os **~3 dias mais recentes costumam vir subestimados**. As tools devolvem exatamente o período pedido e sinalizam isso em `attribution_note`; **desconte os dias recentes ao decidir** e não confunda com queda real.
 
 ## Passo a passo
 
 1. Chame `get_ads_overview` do `radarscout` com a janela: investimento, vendas de anúncios, impressões, cliques, pedidos e os derivados **ACoS, ROAS, CTR, CVR, CPC**. Cobre **todas** as campanhas que gastaram no período — inclusive as pausadas ou arquivadas depois.
-2. Chame `list_ad_campaigns` para a mesma leitura **por campanha**, cada uma com o **estado atual**. Por padrão traz `ENABLED` + `PAUSED`; `ARCHIVED` só se pedirem explicitamente.
+2. Chame `list_ad_campaigns` para a mesma leitura **por campanha**, cada uma com o **estado atual**, orçamento diário e **portfólio**. Por padrão traz `ENABLED` + `PAUSED`; `ARCHIVED` só se pedirem explicitamente. Para perguntas sobre **evolução** (em que dia o gasto disparou, se piorou depois de uma mudança), use `list_ads_daily_performance` — veja **Evolução diária**.
 3. Para descer ao **termo de busca** — o que o cliente realmente digitou —, chame `list_search_terms` (opcionalmente filtrando por campanha). Veja a seção **Termos de busca**.
-4. Para ver **quanto se está pagando e o que isso rendeu** em cada palavra-chave ou alvo, chame `list_ad_bids` **com o período**. Veja a seção **Lances atuais**.
-5. Para ver **como evoluiu** — em que dia o gasto disparou, se piorou depois de uma mudança, quando a veiculação parou —, chame `list_ads_daily_performance` (conta inteira, ou uma campanha com `campaign_id`). As outras leituras dão só o total do período; esta mostra o movimento.
-6. Para julgar **lucratividade** (e não só ACoS), veja as premissas abaixo.
+4. Para ver **quanto se está pagando** em cada palavra-chave ou alvo — e, com período, **o que cada um rendeu** —, chame `list_ad_bids`. Veja a seção **Lances atuais**.
+5. Para julgar **lucratividade** (e não só ACoS), veja as premissas abaixo.
 
 Quando o vendedor decidir **agir** (pausar, mudar lance ou orçamento, negativar), use as ferramentas de execução descritas em **Alterações na conta** — sempre com simulação e confirmação obrigatórias. Para uma skill dedicada exclusivamente a ações, veja `acoes-ads`.
 
@@ -45,6 +44,22 @@ Cada campanha vem com seu estado, e nenhuma é escondida. Uma `PAUSED` com gasto
 ### Quando o estado não pôde ser consultado
 
 Se `state_filter_applied` vier `false`, a lista veio **sem** o filtro de estado — ou a consulta de estado falhou, ou a conta não tem Ads conectado (a nota diz qual). Nesse caso trate os estados como desconhecidos e diga isso.
+
+## Portfólios
+
+Cada campanha em `list_ad_campaigns` vem com o portfólio a que pertence, e a resposta traz o total por portfólio. Para olhar só um portfólio, passe `portfolio_id` em `list_ad_campaigns` ou em `get_ads_overview` ("como foi a Linha Casa?").
+
+- O portfólio é o **de hoje**, mesmo em período passado: uma campanha que mudou de portfólio conta inteira no atual.
+- O resumo por portfólio de `list_ad_campaigns` segue o filtro de estado (sem arquivadas, por padrão); `get_ads_overview` com `portfolio_id` inclui arquivadas. A diferença entre os dois é esperada.
+- Se o `portfolio_id` não for da conta, o overview avisa — não leia isso como "gasto zero".
+
+## Evolução diária
+
+`list_ads_daily_performance` devolve um ponto por dia (investimento, vendas, ACoS, ROAS, CTR, CVR, CPC), da conta ou de uma campanha (`campaign_id`). Até 400 dias por consulta.
+
+- **Dia sem veiculação não aparece** — não há linha. Ausência não é zero importado; é dia sem anúncio exibido.
+- Os ~3 dias finais vêm imaturos (atribuição), como nas outras leituras.
+- Para "piorou depois da mudança?", compare janelas de mesmo tamanho antes e depois, com volume suficiente — não um dia contra outro.
 
 ## Termos de busca
 
@@ -77,27 +92,18 @@ Uma campanha `ENABLED` com investimento e impressões zerados não é "sem dados
 
 `list_ad_bids` lista palavras-chave e alvos de produto/categoria com o **lance que a Amazon usa nos leilões agora**. Em conta grande, filtre por `campaign_id` (ou `ad_group_id`); `type` recorta entre `keyword`, `target` ou ambos.
 
-**Peça sempre com período.** Com `period_start` e `period_end`, cada item vem também com o que aquele lance rendeu no período — investimento, vendas, pedidos, ACoS, ROAS, CTR, CVR e CPC —, ordenado por investimento. Sem período, você vê o preço sem o resultado, e aí qualquer proposta de lance é chute. Um item zerado ou não veiculou no período, ou o dado ainda não foi importado (`get_ads_overview` diz quando foi a última importação).
-
 O campo decisivo é o **`bid_source`**:
 
 - **`próprio`** — o item tem lance definido nele mesmo.
 - **`padrão do grupo`** — o item **não tem lance próprio** e está herdando o padrão do grupo de anúncios. Mudar o lance desse item cria um lance próprio e o desliga do padrão do grupo — e mexer no padrão do grupo mudaria **todos** os itens que ainda herdam. Diga qual dos dois o vendedor quer antes de propor um número.
 
-Os ids que vêm aqui (`keyword_id` / `target_id`) são exatamente os que as ferramentas de mudança de lance recebem — leia daqui, nunca invente.
+Com `period_start` e `period_end` (os dois, ou nenhum), cada item vem também com **desempenho** no período — investimento, vendas, cliques, pedidos, ACoS, ROAS, conversão —, ordenado por investimento. É o que mostra se o lance está valendo a pena. Item sem linha no período lê zero, e a nota avisa que zero pode ser "não veiculou" ou "ainda não importado".
 
-## Portfólios
-
-Quem organiza a conta em **portfólios** (agrupamento de campanhas na Amazon, por marca ou linha de produto) enxerga isso nas leituras:
-
-- `list_ad_campaigns` traz o portfólio de cada campanha e um resumo com o total por portfólio, e aceita `portfolio_id` para listar só as campanhas de um.
-- `get_ads_overview` aceita `portfolio_id` para somar só aquele portfólio.
-
-Duas ressalvas ao comparar: o resumo de `list_ad_campaigns` não inclui campanhas arquivadas (a menos que `states` peça), enquanto o total por portfólio de `get_ads_overview` inclui — os dois números podem divergir legitimamente. E o portfólio é sempre **o de hoje**, inclusive em períodos passados: campanha que mudou de portfólio conta inteira no atual.
+Os ids que vêm aqui (`campaign_id` / `ad_group_id` / `keyword_id` / `target_id`) são exatamente os que as ferramentas de alteração recebem — leia daqui, nunca invente.
 
 ## Alterações na conta (write tools)
 
-Além da leitura, existem tools de **alteração**: pausar/reativar campanha (`pause_campaign`, `resume_campaign`), ajustar orçamento (`update_campaign_budget`), ajustar lances (`update_keyword_bid`, `update_target_bid`) e negativar (`create_negative_keyword`, `create_negative_target`). Os limites exatos de cada uma (faixas de valores, variação máxima por passo, período de espera) estão nas próprias descriptions das tools — não os repita de memória.
+Além da leitura, existem tools de **alteração**: pausar/reativar/arquivar campanha, ajustar orçamento, ajustar lances (de keyword, alvo ou o padrão do grupo), pausar keyword ou alvo, negativar, e **criar** estrutura (campanha inteira, grupo, portfólio, inclusão de keywords/alvos/produtos). A lista completa e o fluxo de cada uma estão na skill `acoes-ads`. Exigem plano ativo de Performance — preview não basta. Os limites exatos de cada uma (faixas de valores, variação máxima por passo, período de espera) estão nas próprias descriptions das tools — não os repita de memória.
 
 1. **Simule primeiro, sempre.** Toda tool de alteração aceita `execute: false` (o padrão): monta o pedido e valida sem mudar nada na Amazon. Mostre ao vendedor o que mudaria e obtenha **confirmação explícita** antes de repetir com `execute: true`.
 2. **Valores absolutos, nunca delta.** As tools recebem o valor final (`bid: 1.20`), não "aumente 10%". Ao ouvir um pedido relativo, calcule sobre o valor atual — o orçamento atual vem em `daily_budget` no `list_ad_campaigns`; o lance atual de keyword/target vem de `list_ad_bids` (ver **Lances atuais**).
@@ -127,5 +133,5 @@ O glossário de Ajuda também explica `ACoS`, `ROAS`, `negativar`, `status de ve
 - **Não conclua "caiu" olhando os últimos dias** — pode ser só atribuição imatura.
 - **Não negative um termo em cima de janela imatura nem de poucos cliques** — e cheque o `keyword_type` antes (colher faz sentido no automático, não numa keyword já exata).
 - Campanha **sem entrega** (`ENABLED` com tudo zerado) não é erro de dado nem tem causa única presumida — siga a ordem de diagnóstico em **Veiculação zero** (`data_freshness` → `serving_status` da campanha → `serving_status_counts` dos anúncios → competitividade de lance/segmentação).
-- **Alterar exige o fluxo de Alterações na conta**: simulação, confirmação explícita do vendedor e só então execução — nunca execute direto. **Criar campanha** ainda não é possível por aqui; essa, sim, é feita no console da Amazon.
+- **Alterar exige o fluxo de Alterações na conta**: simulação, confirmação explícita do vendedor e só então execução — nunca execute direto. Criar campanha, grupo ou portfólio também é possível por aqui — veja `acoes-ads`.
 - **Sem dados no período:** verifique se o Amazon Ads está conectado e se a importação já rodou (a nota da tool indica qual é o caso).

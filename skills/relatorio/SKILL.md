@@ -1,6 +1,6 @@
 ---
 name: relatorio
-description: "Gera um briefing diário ou semanal do negócio em formato narrativo — vendas, lucro, produtos campeões, saúde do repricer e próximo repasse — numa visão única. Use quando o usuário pedir um relatório semanal ou diário, um resumo geral, um 'como está meu negócio', ou um panorama consolidado da operação."
+description: "Gera um briefing diário ou semanal do negócio em formato narrativo — vendas, lucro, produtos campeões, saúde do repricer, próximo repasse e anúncios — numa visão única. Use quando o usuário pedir um relatório semanal ou diário, um resumo geral, um 'como está meu negócio', ou um panorama consolidado da operação."
 ---
 
 # Relatório (briefing do negócio)
@@ -21,6 +21,7 @@ Reúna as peças (reaproveitando o mesmo `seller_account_id` e janela), na ordem
 3. **Lucro:** tool de cascata (`get_profit_waterfall`) — MC3 e a maior deducão; ressalva de cobertura de CMV se parcial/ausente.
 4. **Repricer:** tool de resumo (`get_repricer_summary`) — Buy Box win rate + aumentos/reduções; sinalize erros ou tudo em safe mode.
 5. **Repasse:** tool de resumo de repasses (`get_settlement_summary`) — próximo depósito (quando/quanto).
+6. **Anúncios** (só se `performance` estiver liberado no `whoami`): `get_ads_overview` — investimento, vendas de anúncios e ACoS/ROAS, com a ressalva dos ~3 dias recentes imaturos. Se algo mudou no período, `list_ads_daily_performance` mostra em que dia.
 
 Se alguma tool falhar ou vier vazia, siga com as demais e diga o que faltou — não trave o relatório inteiro.
 
