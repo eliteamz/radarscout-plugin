@@ -13,7 +13,7 @@ Aqui a conversa **muda a conta de anúncios de verdade**. Para só entender o de
 
 Toda ferramenta de ação roda **em simulação por padrão**: sem `execute:true` ela devolve exatamente o que seria enviado à Amazon e nada muda lá.
 
-1. **Leia antes.** Pegue o estado atual: `list_ad_campaigns` (id, orçamento diário e portfólio da campanha), `list_ad_bids` (`campaign_id`/`ad_group_id`/`keyword_id`/`target_id` e o lance atual), `list_search_terms` (o termo antes de negativar), `list_seller_offers` (o SKU antes de anunciar um produto). **Nunca invente um id** nem chute o valor atual.
+1. **Leia antes.** Pegue o estado atual: `list_ad_campaigns` (id, orçamento diário e portfólio da campanha), `list_ad_bids` (`campaign_id`/`ad_group_id`/`keyword_id`/`target_id` e o lance atual), `list_search_terms` (o termo antes de negativar), `list_seller_offers` (o SKU antes de anunciar um produto). **Nunca invente um id** nem chute o valor atual. Id da Amazon é **só número** (ex.: `150147054488094`), copiado do campo `campaign_id`/`ad_group_id`/`keyword_id`/`target_id` — o **nome** da campanha não é id.
 2. **Simule.** Chame a ferramenta sem `execute` e mostre ao vendedor o de-para: valor de hoje → valor proposto, e por quê.
 3. **Peça confirmação explícita** desse valor, nessa campanha.
 4. **Só então** repita a chamada com `execute:true`.
@@ -35,12 +35,16 @@ Um "pode subir o lance" solto no meio da conversa **não é confirmação** de u
 | Desligar/religar palavra-chave | `update_keyword_state` | `keywordId`, `state` (`PAUSED`/`ENABLED`); `campaignId` recomendado |
 | Desligar/religar alvo | `update_target_state` | `targetId`, `state`; `campaignId` recomendado |
 | Bloquear uma busca | `create_negative_keyword` | `campaignId` (sempre), `keywordText`, `matchType`; `adGroupId` para valer só no grupo |
-| Bloquear um produto/categoria | `create_negative_target` | `campaignId` (sempre), `expression`; `adGroupId` para valer só no grupo |
+| Bloquear um produto ou uma marca | `create_negative_target` | `campaignId` (sempre), `expression` com `type` `ASIN_SAME_AS` (produto) ou `ASIN_BRAND_SAME_AS` (marca); `adGroupId` para valer só no grupo |
 | Encerrar campanha de vez | `archive_campaign` | `campaignId`, `confirm_archive:true` junto de `execute:true` |
 
 Negativação **sem** `adGroupId` vale para a campanha inteira — diga isso ao vendedor antes de executar; é o erro mais caro de reverter.
 
 **Pausar ≠ negativar.** Pausar a palavra-chave (ou alvo) só desliga aquele item — para de gastar, o histórico fica e dá para religar. Negativar bloqueia a **busca** no grupo ou na campanha inteira, inclusive o que outras palavras capturariam. Se o vendedor quer "parar de gastar com essa palavra", pausar costuma ser o que ele quer; pergunte se houver dúvida.
+
+**Um grupo é de palavras-chave ou de alvos de produto, nunca dos dois.** A Amazon recusa alvo de produto num grupo que já tem palavra-chave (e o contrário). Para anunciar nos dois jeitos, crie um grupo para cada.
+
+**Negativar alvo é por produto ou por marca.** A Amazon não aceita negativar categoria. Para cortar uma categoria que não converte, pause o alvo de categoria (`update_target_state`).
 
 **Lance padrão do grupo move vários de uma vez.** `update_ad_group_default_bid` muda todo item que aparece com `bid_source` "padrão do grupo" em `list_ad_bids`. Mostre quantos itens herdam antes de simular.
 
@@ -87,7 +91,7 @@ Quando uma chamada volta recusada, o motivo vem junto:
 | `rejected_hard_limit` | O valor está fora da faixa permitida, o salto é grande demais (mostre a `allowedRange`), ou o nome/item já existe (mostre os `duplicates`). |
 | `rejected_rate_limit` | Bateu o teto de alterações do dia (ou de 10 campanhas criadas no dia). |
 | `partial` | Parte foi criada, parte não — reporte o que existe e o que faltou. |
-| `api_error` | A Amazon recusou — repasse o motivo (tipo do erro, campo, faixa), não repita a chamada às cegas. |
+| `api_error` | A Amazon recusou — repasse o motivo (tipo do erro, campo, faixa), não repita a chamada às cegas. Se vier **sem motivo**, diga exatamente isso ("a Amazon recusou sem explicar") e **não invente a causa**. |
 | `not_connected` | A conta de anúncios não está conectada ao Radar. |
 | `not_enabled` | A execução de mudanças não está liberada para essa conta. |
 
@@ -121,7 +125,8 @@ Duas ressalvas:
 ## Cuidados
 
 - **Nunca execute sem confirmação explícita do valor.** Simulação primeiro, sempre.
-- **Nunca invente ids.** `campaignId`, `adGroupId`, `keywordId`, `targetId`, `portfolioId` e SKU vêm das ferramentas de leitura.
+- **Nunca invente ids.** `campaignId`, `adGroupId`, `keywordId`, `targetId`, `portfolioId` e SKU vêm das ferramentas de leitura. IDs Amazon são numéricos; nome da campanha não serve como id.
+- **Nunca mande o vendedor para o console da Amazon por causa de um erro que você não entendeu.** Releia o estado, confira id/SKU e simule de novo; só com recusa clara da Amazon é que o caminho manual entra.
 - **Nunca arquive** sem o vendedor confirmar que entende que não tem volta; na dúvida, pause.
 - **Nunca force** uma proteção sem recusa prévia por aquele motivo e sem o vendedor pedir.
 - **Não negative um termo** em cima de poucos cliques ou de janela recente — veja `keyword_type` e volume na skill `ads`.
