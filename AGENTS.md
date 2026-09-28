@@ -10,7 +10,8 @@ Radar Scout é uma ferramenta para vendedores Amazon acompanharem **vendas, lucr
 
 - Servidor MCP **remoto**: Streamable HTTP + OAuth 2.1 em `https://mcp.radarscout.com.br/mcp`.
 - **Seller-scoped** — cada usuário enxerga apenas os próprios dados. Auth via OAuth (no Claude Code: 401 → `/mcp`).
-- **Leitura + ação:** a maioria das tools é read-only; as tools de Amazon Ads **escrevem na conta do vendedor** (ver *Tools de ação*). O acesso a cada domínio depende do **entitlement** do plano (`radar` / `analytics` / `repricer`) — `whoami` devolve o resumo.
+- **Leitura + ação:** a maioria das tools é read-only; as tools de Amazon Ads **escrevem na conta do vendedor** (ver *Tools de ação*). O acesso a cada domínio depende do **entitlement** do plano (`radar` / `analytics` / `repricer` / `performance`) — `whoami` devolve o resumo.
+- **Modo preview:** as tools de **leitura** de Analytics e Performance respondem também em preview (sem plano ativo do app), com um aviso separado do dado: é o histórico que já está na plataforma, não atualizado. Escrita em Ads sempre exige plano ativo de Performance; Radar e Repricer não têm preview. Período de teste conta como ativo.
 - Nome lógico do server: `radarscout`. O nome qualificado da tool **muda por harness**; refira as tools pela **capacidade** + server lógico `radarscout`, nunca cole o namespace completo (`mcp__plugin_...`).
 
 ### Tools de leitura (por capacidade)
@@ -20,20 +21,24 @@ Radar Scout é uma ferramenta para vendedores Amazon acompanharem **vendas, lucr
 - **Produtos (catálogo / oportunidades):** `search_products`, `get_product_details`, `list_tracked_products`.
 - **Ofertas do seller (SellerListing):** `list_seller_offers`, `get_seller_offer` — estoque, FBA/FBM/DBA, Buy Box, reposição (velocidade, dias de cobertura, status). Nunca conflatar com catálogo.
 - **Vendas:** `get_sales_overview`, `list_top_products`.
+- **Pedidos:** `list_orders` — pedidos Amazon pedido a pedido (ou item a item com `granularity:"item"`), com valor decomposto (itens, frete, desconto, imposto) para conferir contra ERP. `items_total` **não** inclui frete; `status_group` padrão `all` **inclui cancelados**; `total_orders` conta pedidos e não é comparável ao `orders` de `get_sales_overview` (itens de pedido). Sem dado pessoal do comprador.
 - **Lucro:** `get_profit_waterfall`.
 - **Repasses:** `get_settlement_summary`.
 - **Repricer:** `get_repricer_summary`, `list_repricer_activity`, `explain_price_change`.
-- **Ads:** `get_ads_overview`, `list_ad_campaigns`, `list_search_terms`, `list_ad_bids` — performance (investimento, vendas de anúncios, ACoS/ROAS) no total da conta, por campanha (com estado atual), por termo de busca e o lance atual de cada palavra-chave/alvo (`bid_source` indica se é próprio ou herdado do grupo).
+- **Ads** (entitlement `performance`): `get_ads_overview`, `list_ads_daily_performance`, `list_ad_campaigns`, `list_search_terms`, `list_ad_bids` — performance (investimento, vendas de anúncios, ACoS/ROAS) no total da conta, dia a dia (até 400 dias; dia sem veiculação não tem linha), por campanha (com estado atual, orçamento e **portfólio**; filtro `portfolio_id` também no overview), por termo de busca e o lance atual de cada palavra-chave/alvo (`bid_source` indica se é próprio ou herdado do grupo; com `period_start`/`period_end` traz também o desempenho de cada item).
 - **Automação de Ads:** `list_ads_proposals` — fila de propostas do motor (padrão `pending`).
 - **Simuladores (sem dado de seller):** `calculate_fees` (tarifas, lucro, margem, ROI para FBA/FBM/DBA), `estimate_sales_from_bsr` (unidades/mês por categoria + BSR).
 - **Conceitos:** `explain_concept` — glossário Radar/Amazon (PMI, MC1–MC3, repasse, floor price, Buy Box %, safe mode, limites de alteração).
 
 ### Tools de ação (escrevem na conta do vendedor)
 
-Amazon Ads, entitlement `analytics`:
+Amazon Ads, entitlement `performance` (plano ativo — preview não basta):
 
-- **Campanha:** `pause_campaign`, `resume_campaign`, `update_campaign_budget`.
-- **Lances:** `update_keyword_bid`, `update_target_bid`.
+- **Campanha:** `pause_campaign`, `resume_campaign`, `update_campaign_budget`, `archive_campaign` (**irreversível**; exige `confirm_archive:true` junto de `execute:true`).
+- **Criação de estrutura:** `create_campaign_structure` (campanha SP inteira: grupos, produtos por SKU, keywords, alvos, negativas; `campaign.portfolioId` opcional), `create_portfolio`, `create_ad_group`.
+- **Incremento em grupo existente:** `add_keywords`, `add_targets`, `add_product_ads` (até 100 por chamada).
+- **Lances:** `update_keyword_bid`, `update_target_bid`, `update_ad_group_default_bid` (move todo item que herda o padrão do grupo).
+- **Estado de keyword/alvo:** `update_keyword_state`, `update_target_state` (`PAUSED`/`ENABLED`; não arquiva; diferente de negativar).
 - **Negativação:** `create_negative_keyword`, `create_negative_target`.
 - **Propostas da automação:** `approve_ads_proposal`, `reject_ads_proposal`.
 
@@ -42,6 +47,9 @@ Contrato invariável dessas tools:
 1. **Simulação por padrão.** Sem `execute:true` nada é enviado à Amazon — a resposta `dry_run` traz o que seria enviado. Só mande `execute:true` após confirmação explícita do vendedor **daquele valor**.
 2. **Ler antes de escrever.** Ids e valores atuais vêm de `list_ad_campaigns` / `list_ad_bids` / `list_search_terms`. Nunca inventar id.
 3. **Proteções do motor:** mudança gradual (orçamento até 30%, lance até 50% por vez), faixas de segurança (lance R$ 0,02–500; orçamento R$ 1–100.000), período de observação de 7 dias por campanha/lance (14 dias em negativações) e teto diário de alterações. Recusas voltam em `rejected_hard_limit` / `rejected_rate_limit` / `rejected_cooldown` com o motivo e a faixa permitida.
+   - Lance padrão do grupo segue as regras de lance; pausar/reativar keyword ou alvo tem espera de 7 dias.
+   - **Adições** (`add_*`, `create_ad_group`) não têm espera nem delta; item repetido no grupo recusa a chamada com a lista `duplicates`; aceite parcial volta `partial: true` com `created`/`failed`.
+   - **Criação de campanha:** até 10 estruturas por seller/dia; nome de campanha (ou portfólio, ou grupo na campanha) repetido é recusado. Se um passo falhar no meio, o que foi criado fica **pausado** e a resposta diz o que existe (`partial`).
 4. **`override_cooldown` / `override_rate_limit`** só após uma recusa por aquele motivo **e** com confirmação explícita do vendedor.
 5. **`approve_ads_proposal` é assíncrona** — o resultado final se lê em `list_ads_proposals` (`executed` / `failed` / `unknown`; `unknown` exige investigar o `auditId`).
 
@@ -50,11 +58,11 @@ Contrato invariável dessas tools:
 12 skills do vendedor em `skills/`, cada uma orquestrando os tools `radarscout` e entregando output interpretado em pt-BR:
 
 - `inicio` — conecta (inclusive gerando o link da Amazon) e resolve o `seller_account_id`.
-- `vendas` — panorama de vendas (GMV, ticket, MC3, campeões).
+- `vendas` — panorama de vendas (GMV, ticket, MC3, campeões) e conferência pedido a pedido.
 - `lucro` — cascata financeira (MC1–MC3, CMV, tarifas, anúncios).
 - `repricer` — saúde do repricer e auditoria de mudança de preço.
-- `ads` — performance de Amazon Ads (ACoS/ROAS, campanhas, termos, lances) e premissas de leitura.
-- `acoes-ads` — execução em Ads (pausar, orçamento, lances, negativação) e fila de propostas da automação.
+- `ads` — performance de Amazon Ads (ACoS/ROAS, evolução diária, campanhas, portfólios, termos, lances) e premissas de leitura.
+- `acoes-ads` — execução em Ads (pausar, orçamento, lances, negativação, criar campanha/grupo/portfólio, incluir keywords/alvos/produtos, arquivar) e fila de propostas da automação.
 - `repasses` — próximo repasse e conciliação com vendas.
 - `produtos` — busca de catálogo e watchlist de Buy Box.
 - `ofertas` — SKUs do seller: estoque, FBA/FBM, Buy Box e reposição.
